@@ -1,7 +1,7 @@
 use console::*;
 use rand::prelude::*;
 
-mod tetromino;
+pub mod tetromino;
 use tetromino::*;
 
 const HEIGHT: usize = 20;
@@ -36,20 +36,18 @@ impl Game {
     }
 
     pub fn render(&self) {
-        self.term.clear_last_lines(HEIGHT);
+        // self.term.clear_last_lines(HEIGHT);
         for i in 0..HEIGHT {
-            let mut line = String::new();
             for j in 0..WIDTH {
                 match self.grid[i][j] {
                     Some(color) => {
                         let color = Style::new().bg(color);
-                        line += &format!("{}", color.apply_to("  "));
+                        self.term.write_str(&format!("{}", color.apply_to("  ")));
                     }
-                    None => line += "  "
+                    None => { self.term.write_str("  "); }
                 }
             }
-            line += "\r";
-            self.term.write_line(&line);
+            self.term.write_str("\r\n");
         }
         self.term.flush();
     }
@@ -78,10 +76,38 @@ impl Game {
         }
     }
 
-    pub fn shift(&mut self, iinc: i32, jinc: i32) {
+    pub fn shift(&mut self, dir: Direction) {
+        let (left, right, down) = self.piece_touches();
+        println!("{}, {}, {}", left, right, down);
+        let touch = match dir {
+            Direction::Left  => left,
+            Direction::Right => right,
+            Direction::Down  => down
+        };
+        if touch { return; }
         self.draw_piece(false);
-        self.tetromino.shift(iinc, jinc);
+        self.tetromino.shift(dir);
         self.draw_piece(true);
+    }
+
+    fn piece_touches(&self) -> (bool, bool, bool) {
+        let cells = self.tetromino.cells;
+        let left = cells.iter().any(|cell|
+            cell.1 == 0 
+            || self.grid[cell.0][cell.1-1].is_some()
+            && !cells.contains(&(cell.0, cell.1-1)) 
+        );
+        let right = cells.iter().any(|cell|
+            cell.1 == WIDTH-1 
+            || self.grid[cell.0][cell.1+1].is_some()
+            && !cells.contains(&(cell.0, cell.1+1)) 
+        );
+        let down = cells.iter().any(|cell|
+            cell.0 == HEIGHT-1
+            || self.grid[cell.0+1][cell.1].is_some()
+            && !cells.contains(&(cell.0+1, cell.1)) 
+        );
+        (left, right, down)
     }
 }
 

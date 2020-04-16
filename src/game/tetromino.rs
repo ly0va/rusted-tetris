@@ -19,6 +19,10 @@ pub const COLORS: [Color; 6] = [
     Color::Magenta
 ];
 
+pub enum Direction {
+    Left, Right, Down
+}
+
 pub struct Tetromino {
     pub cells: [(usize, usize); 4],
     pub color: Color
@@ -33,10 +37,13 @@ impl Tetromino {
         }
     }
 
-    pub fn shift(&mut self, iinc: i32, jinc: i32) {
+    pub fn shift(&mut self, dir: Direction) {
         for cell in self.cells.iter_mut() {
-            cell.0 = (cell.0 as i32 + iinc) as usize;
-            cell.1 = (cell.1 as i32 + jinc) as usize;
+            match dir {
+                Direction::Left  => cell.1 -= 1,
+                Direction::Right => cell.1 += 1,
+                Direction::Down  => cell.0 += 1
+            }
         }
     }
 
