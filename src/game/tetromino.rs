@@ -19,6 +19,8 @@ pub const COLORS: [Color; 6] = [
     Color::Magenta
 ];
 
+pub struct OverflowError;
+
 pub enum Direction {
     Left, Right, Down
 }
@@ -47,16 +49,23 @@ impl Tetromino {
         }
     }
 
-    pub fn turn(&mut self) {
-        let center = self.cells[1];
+    pub fn turn(&mut self) -> Result<(), OverflowError> {
+        let center_y = self.cells[1].0 as isize;
+        let center_x = self.cells[1].1 as isize;
         for &i in &[0, 2, 3] {
-            self.cells[i].0 -= center.0;
-            self.cells[i].1 -= center.1;
-            self.cells[i] = (
-                center.0 + self.cells[i].1, 
-                center.1 - self.cells[i].0
+            let y = self.cells[i].0 as isize;
+            let x = self.cells[i].1 as isize;
+            let (y, x) = (
+                center_y + (x - center_x), 
+                center_x - (y - center_y)
             );
+            if y >= 0 && x >= 0 {
+                self.cells[i] = (y as usize, x as usize);
+            } else {
+                return Err(OverflowError);
+            }
         }
+        Ok(())
     }
 }
 

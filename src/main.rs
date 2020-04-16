@@ -14,8 +14,9 @@ fn main() {
         match event.recv() {
             Ok(Event::Tick) => game.shift(Direction::Down),
             Ok(Event::Input(key)) => match key {
-                Key::ArrowLeft => game.shift(Direction::Left),
+                Key::ArrowLeft  => game.shift(Direction::Left),
                 Key::ArrowRight => game.shift(Direction::Right),
+                Key::ArrowUp    => game.turn(),
                 _ => ()
             }
             _ => println!("Error!\r")

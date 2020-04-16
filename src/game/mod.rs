@@ -36,7 +36,7 @@ impl Game {
     }
 
     pub fn render(&self) {
-        // self.term.clear_last_lines(HEIGHT);
+        self.term.clear_last_lines(HEIGHT);
         for i in 0..HEIGHT {
             for j in 0..WIDTH {
                 match self.grid[i][j] {
@@ -78,7 +78,6 @@ impl Game {
 
     pub fn shift(&mut self, dir: Direction) {
         let (left, right, down) = self.piece_touches();
-        println!("{}, {}, {}", left, right, down);
         let touch = match dir {
             Direction::Left  => left,
             Direction::Right => right,
@@ -90,24 +89,41 @@ impl Game {
         self.draw_piece(true);
     }
 
-    fn piece_touches(&self) -> (bool, bool, bool) {
+    fn piece_touches(&mut self) -> (bool, bool, bool) {
+        self.draw_piece(false);
         let cells = self.tetromino.cells;
         let left = cells.iter().any(|cell|
             cell.1 == 0 
             || self.grid[cell.0][cell.1-1].is_some()
-            && !cells.contains(&(cell.0, cell.1-1)) 
         );
         let right = cells.iter().any(|cell|
             cell.1 == WIDTH-1 
             || self.grid[cell.0][cell.1+1].is_some()
-            && !cells.contains(&(cell.0, cell.1+1)) 
         );
         let down = cells.iter().any(|cell|
             cell.0 == HEIGHT-1
             || self.grid[cell.0+1][cell.1].is_some()
-            && !cells.contains(&(cell.0+1, cell.1)) 
         );
+        self.draw_piece(true);
         (left, right, down)
+    }
+
+    pub fn turn(&mut self) {
+        self.draw_piece(false);
+        let backup = self.tetromino.cells.clone();
+        if self.tetromino.turn().is_err() { 
+            self.tetromino.cells = backup;
+            self.draw_piece(true);
+            return; 
+        }
+        let in_bounds = self.tetromino.cells.iter().all(|cell|
+            cell.0 < HEIGHT && cell.1 < WIDTH
+            && self.grid[cell.0][cell.1].is_none()
+        );
+        if !in_bounds {
+            self.tetromino.cells = backup;
+        }
+        self.draw_piece(true);
     }
 }
 
