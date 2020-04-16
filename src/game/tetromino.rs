@@ -1,4 +1,5 @@
 use console::Color;
+use rand::prelude::*;
 
 pub const TETROMINOS: [[(usize, usize); 4]; 7] = [
     [(0, 0), (1, 0), (2, 0), (3, 0)], 
@@ -37,6 +38,18 @@ impl Tetromino {
             cells: TETROMINOS[index],
             color: COLORS[color]
         }
+    }
+
+    pub fn new_random(width: usize) -> Self {
+        let mut rng = rand::thread_rng();
+        let t = rng.gen_range(0, TETROMINOS.len());
+        let c = rng.gen_range(0, COLORS.len());
+        let mut tetromino = Self::new(t, c);
+        let center = rng.gen_range(0, width-2);
+        for cell in tetromino.cells.iter_mut() {
+            cell.1 += center;
+        }
+        tetromino
     }
 
     pub fn shift(&mut self, dir: Direction) {

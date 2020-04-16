@@ -1,5 +1,4 @@
 use console::*;
-use rand::prelude::*;
 
 pub mod tetromino;
 use tetromino::*;
@@ -10,10 +9,10 @@ const WIDTH:  usize = 10;
 pub struct Game {
     grid: [[Option<Color>; WIDTH]; HEIGHT],
     score: u32,
-    game_over: bool,
-    pause: bool,
+    // pause: bool,
     tetromino: Tetromino,
-    pub term: Term
+    term: Term,
+    pub over: bool,
 }
 
 impl Game {
@@ -22,23 +21,22 @@ impl Game {
         let term = Term::buffered_stdout();
         term.hide_cursor();
         term.clear_screen();
-        let mut rng = rand::thread_rng();
-        let t = rng.gen_range(0, TETROMINOS.len());
-        let c = rng.gen_range(0, COLORS.len());
         Game {
             grid: [[None; WIDTH]; HEIGHT],
             score: 0,
-            pause: false,
-            game_over: false,
+            // pause: false,
+            over: false,
             term: term,
-            tetromino: Tetromino::new(t, c)
+            tetromino: Tetromino::new_random(WIDTH)
         }
     }
 
     pub fn render(&mut self) {
-        self.term.clear_last_lines(HEIGHT);
+        self.term.clear_last_lines(HEIGHT+1);
         self.draw_piece(true);
+        self.term.write_line(&format!("Score: {}\r", self.score));
         for i in 0..HEIGHT {
+            self.term.write_str("|");
             for j in 0..WIDTH {
                 match self.grid[i][j] {
                     Some(color) => {
@@ -48,7 +46,7 @@ impl Game {
                     None => { self.term.write_str("  "); }
                 }
             }
-            self.term.write_str("\r\n");
+            self.term.write_str("|\r\n");
         }
         self.term.flush();
         self.draw_piece(false);
@@ -121,6 +119,19 @@ impl Game {
     pub fn hard_drop(&mut self) {
         while !self.piece_touches().2 {
             self.shift(Direction::Down);
+        }
+    }
+
+    pub fn tick(&mut self) {
+        if !self.piece_touches().2 {
+            self.shift(Direction::Down);
+        } else {
+            self.draw_piece(true);
+            self.clear_lines();
+            self.tetromino = Tetromino::new_random(WIDTH);
+            self.over = self.tetromino.cells.iter().any(|cell|
+                self.grid[cell.0][cell.1].is_some()
+            );
         }
     }
 }

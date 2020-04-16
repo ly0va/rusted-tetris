@@ -10,9 +10,9 @@ use events::Event;
 fn main() {
     let mut game = Game::new();
     let event = events::receiver();
-    loop {
+    while !game.over {
         match event.recv() {
-            Ok(Event::Tick) => game.shift(Direction::Down),
+            Ok(Event::Tick) => game.tick(),
             Ok(Event::Input(key)) => match key {
                 'a' => game.shift(Direction::Left),
                 'd' => game.shift(Direction::Right),
