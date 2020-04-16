@@ -12,8 +12,8 @@ pub struct Game {
     score: u32,
     game_over: bool,
     pause: bool,
-    term: Term,
-    tetromino: Tetromino
+    tetromino: Tetromino,
+    pub term: Term
 }
 
 impl Game {
@@ -116,6 +116,12 @@ impl Game {
             if in_bounds { return; }
         } 
         self.tetromino.cells = backup;
+    }
+
+    pub fn hard_drop(&mut self) {
+        while !self.piece_touches().2 {
+            self.shift(Direction::Down);
+        }
     }
 }
 

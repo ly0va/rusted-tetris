@@ -4,7 +4,7 @@ use std::time::Duration;
 use console::*;
 
 pub enum Event {
-    Tick, Input(Key)
+    Tick, Input(char)
 }
 
 pub fn receiver() -> mpsc::Receiver<Event> {
@@ -17,7 +17,7 @@ pub fn receiver() -> mpsc::Receiver<Event> {
     thread::spawn(move || {
         let term = Term::buffered_stdout();
         loop {
-            if let Ok(key) = term.read_key() {
+            if let Ok(key) = term.read_char() {
                 input_tx.send(Event::Input(key));
             }
         }

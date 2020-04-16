@@ -14,9 +14,10 @@ fn main() {
         match event.recv() {
             Ok(Event::Tick) => game.shift(Direction::Down),
             Ok(Event::Input(key)) => match key {
-                Key::ArrowLeft  => game.shift(Direction::Left),
-                Key::ArrowRight => game.shift(Direction::Right),
-                Key::ArrowUp    => game.turn(),
+                'a' => game.shift(Direction::Left),
+                'd' => game.shift(Direction::Right),
+                'w' => game.turn(),
+                's' => game.hard_drop(),
                 _ => ()
             }
             _ => println!("Error!\r")
