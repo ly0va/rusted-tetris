@@ -1,4 +1,6 @@
-use console::*;
+use termion::raw::*;
+use termion::color;
+use std::io::{self, Write};
 
 pub mod tetromino;
 use tetromino::*;
@@ -11,44 +13,50 @@ pub struct Game {
     score: u32,
     // pause: bool,
     tetromino: Tetromino,
-    term: Term,
+    out: RawTerminal<io::Stdout>,
     pub over: bool,
 }
 
 impl Game {
 
     pub fn new() -> Self {
-        let term = Term::buffered_stdout();
-        term.hide_cursor();
-        term.clear_screen();
+        let mut stdout = io::stdout().into_raw_mode().unwrap();
+        write!(stdout, "{}{}", 
+            termion::cursor::Hide,
+            termion::clear::All
+        );
         Game {
             grid: [[None; WIDTH]; HEIGHT],
             score: 0,
             // pause: false,
             over: false,
-            term: term,
+            out: stdout,
             tetromino: Tetromino::new_random(WIDTH)
         }
     }
 
     pub fn render(&mut self) {
-        self.term.clear_last_lines(HEIGHT+1);
         self.draw_piece(true);
-        self.term.write_line(&format!("Score: {}\r", self.score));
+        let wall = format!("{} {}", color::Bg(color::White), color::Bg(color::Reset));
+        write!(self.out, "{}Score: {}\r\n",
+            termion::cursor::Goto(1, 1), self.score);
         for i in 0..HEIGHT {
-            self.term.write_str("|");
+            write!(self.out, "{}", wall);
             for j in 0..WIDTH {
                 match self.grid[i][j] {
                     Some(color) => {
-                        let color = Style::new().bg(color);
-                        self.term.write_str(&format!("{}", color.apply_to("  ")));
+                        write!(self.out, "{}  {}", 
+                            color.bg_string(), 
+                            color::Bg(color::Reset));
                     }
-                    None => { self.term.write_str("  "); }
+                    None => { write!(self.out, "  "); }
                 }
             }
-            self.term.write_str("|\r\n");
+            write!(self.out, "{}\r\n", wall);
         }
-        self.term.flush();
+        write!(self.out, "{}▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀{}\r\n", 
+                color::Fg(color::White), color::Fg(color::Reset));
+        self.out.flush();
         self.draw_piece(false);
     }
 
@@ -138,8 +146,8 @@ impl Game {
 
 impl Drop for Game {
     fn drop(&mut self) {
-        self.term.show_cursor();
-        self.term.flush();
+        write!(self.out, "{}", termion::cursor::Show);
+        self.out.flush();
     }
 }
 

@@ -1,10 +1,11 @@
-use std::sync::mpsc;
 use std::thread;
+use std::sync::mpsc;
 use std::time::Duration;
-use console::*;
+use termion::event::Key;
+use termion::input::TermRead;
 
 pub enum Event {
-    Tick, Input(char)
+    Tick, Input(Key)
 }
 
 pub fn receiver() -> mpsc::Receiver<Event> {
@@ -15,11 +16,9 @@ pub fn receiver() -> mpsc::Receiver<Event> {
         timer_tx.send(Event::Tick);
     });
     thread::spawn(move || {
-        let term = Term::buffered_stdout();
-        loop {
-            if let Ok(key) = term.read_char() {
-                input_tx.send(Event::Input(key));
-            }
+        let stdin = std::io::stdin();
+        for c in stdin.keys() {
+            input_tx.send(Event::Input(c.unwrap()));
         }
     });
     event

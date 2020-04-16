@@ -1,7 +1,7 @@
-use console::Color;
+use termion::color::{self, AnsiValue};
 use rand::prelude::*;
 
-pub const TETROMINOS: [[(usize, usize); 4]; 7] = [
+const TETROMINOS: [[(usize, usize); 4]; 7] = [
     [(0, 0), (1, 0), (2, 0), (3, 0)], 
     [(0, 0), (1, 0), (2, 0), (0, 1)], 
     [(0, 0), (1, 0), (2, 0), (1, 1)], 
@@ -11,14 +11,16 @@ pub const TETROMINOS: [[(usize, usize); 4]; 7] = [
     [(0, 0), (1, 0), (0, 1), (1, 1)]
 ];
 
-pub const COLORS: [Color; 6] = [
-    Color::Cyan,
-    Color::Red,
-    Color::Blue,
-    Color::Green,
-    Color::Yellow,
-    Color::Magenta
+const COLORS: [(u8, u8, u8); 6] = [
+    (5, 0, 0),
+    (0, 5, 0),
+    (0, 0, 5),
+    (5, 5, 0),
+    (5, 0, 5),
+    (0, 5, 5)
 ];
+
+pub type Color = AnsiValue;
 
 pub struct OverflowError;
 
@@ -33,10 +35,10 @@ pub struct Tetromino {
 
 impl Tetromino {
 
-    pub fn new(index: usize, color: usize) -> Self {
+    pub fn new(index: usize, color: Color) -> Self {
         Tetromino {
             cells: TETROMINOS[index],
-            color: COLORS[color]
+            color: color
         }
     }
 
@@ -44,7 +46,8 @@ impl Tetromino {
         let mut rng = rand::thread_rng();
         let t = rng.gen_range(0, TETROMINOS.len());
         let c = rng.gen_range(0, COLORS.len());
-        let mut tetromino = Self::new(t, c);
+        let (r, g, b) = COLORS[c];
+        let mut tetromino = Self::new(t, Color::rgb(r, g, b));
         let center = rng.gen_range(0, width-2);
         for cell in tetromino.cells.iter_mut() {
             cell.1 += center;

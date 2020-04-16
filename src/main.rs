@@ -1,11 +1,9 @@
-use console::*;
-
 mod game;
+mod events;
 use game::Game;
 use game::tetromino::Direction;
-
-mod events;
 use events::Event;
+use termion::event::Key;
 
 fn main() {
     let mut game = Game::new();
@@ -14,10 +12,11 @@ fn main() {
         match event.recv() {
             Ok(Event::Tick) => game.tick(),
             Ok(Event::Input(key)) => match key {
-                'a' => game.shift(Direction::Left),
-                'd' => game.shift(Direction::Right),
-                'w' => game.turn(),
-                's' => game.hard_drop(),
+                Key::Char('a') => game.shift(Direction::Left),
+                Key::Char('d') => game.shift(Direction::Right),
+                Key::Char('w') => game.turn(),
+                Key::Char('s') => game.hard_drop(),
+                Key::Char('q') | Key::Ctrl('c') => break,
                 _ => ()
             }
             _ => println!("Error!\r")
