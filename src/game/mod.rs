@@ -35,8 +35,9 @@ impl Game {
         }
     }
 
-    pub fn render(&self) {
+    pub fn render(&mut self) {
         self.term.clear_last_lines(HEIGHT);
+        self.draw_piece(true);
         for i in 0..HEIGHT {
             for j in 0..WIDTH {
                 match self.grid[i][j] {
@@ -50,6 +51,7 @@ impl Game {
             self.term.write_str("\r\n");
         }
         self.term.flush();
+        self.draw_piece(false);
     }
 
     pub fn draw_piece(&mut self, draw: bool) {
@@ -84,13 +86,10 @@ impl Game {
             Direction::Down  => down
         };
         if touch { return; }
-        self.draw_piece(false);
         self.tetromino.shift(dir);
-        self.draw_piece(true);
     }
 
-    fn piece_touches(&mut self) -> (bool, bool, bool) {
-        self.draw_piece(false);
+    fn piece_touches(&self) -> (bool, bool, bool) {
         let cells = self.tetromino.cells;
         let left = cells.iter().any(|cell|
             cell.1 == 0 
@@ -104,26 +103,19 @@ impl Game {
             cell.0 == HEIGHT-1
             || self.grid[cell.0+1][cell.1].is_some()
         );
-        self.draw_piece(true);
         (left, right, down)
     }
 
     pub fn turn(&mut self) {
-        self.draw_piece(false);
         let backup = self.tetromino.cells.clone();
-        if self.tetromino.turn().is_err() { 
-            self.tetromino.cells = backup;
-            self.draw_piece(true);
-            return; 
-        }
-        let in_bounds = self.tetromino.cells.iter().all(|cell|
-            cell.0 < HEIGHT && cell.1 < WIDTH
-            && self.grid[cell.0][cell.1].is_none()
-        );
-        if !in_bounds {
-            self.tetromino.cells = backup;
-        }
-        self.draw_piece(true);
+        if self.tetromino.turn().is_ok() { 
+            let in_bounds = self.tetromino.cells.iter().all(|cell|
+                cell.0 < HEIGHT && cell.1 < WIDTH
+                && self.grid[cell.0][cell.1].is_none()
+            );
+            if in_bounds { return; }
+        } 
+        self.tetromino.cells = backup;
     }
 }
 
