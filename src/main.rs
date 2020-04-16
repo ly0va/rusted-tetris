@@ -1,16 +1,24 @@
-use std::thread;
-use std::time::Duration;
+use console::*;
 
 mod game;
 use game::Game;
 
+mod events;
+use events::Event;
+
 fn main() {
     let mut game = Game::new();
-    for i in 0..15 {
-        game.draw_piece(false);
-        game.tetromino.shift(1, 0);
-        game.draw_piece(true);
+    let event = events::receiver();
+    loop {
+        match event.recv() {
+            Ok(Event::Tick) => game.shift(1, 0),
+            Ok(Event::Input(key)) => match key {
+                Key::ArrowLeft => game.shift(0, -1),
+                Key::ArrowRight => game.shift(0, 1),
+                _ => ()
+            }
+            _ => println!("Error!\r")
+        }
         game.render();
-        thread::sleep(Duration::from_millis(500));
     }
 }

@@ -13,7 +13,7 @@ pub struct Game {
     game_over: bool,
     pause: bool,
     term: Term,
-    pub tetromino: Tetromino
+    tetromino: Tetromino
 }
 
 impl Game {
@@ -48,6 +48,7 @@ impl Game {
                     None => line += "  "
                 }
             }
+            line += "\r";
             self.term.write_line(&line);
         }
         self.term.flush();
@@ -75,6 +76,12 @@ impl Game {
                 self.grid[0][..].copy_from_slice(&[None; WIDTH]);
             }
         }
+    }
+
+    pub fn shift(&mut self, iinc: i32, jinc: i32) {
+        self.draw_piece(false);
+        self.tetromino.shift(iinc, jinc);
+        self.draw_piece(true);
     }
 }
 
