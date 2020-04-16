@@ -1,3 +1,5 @@
+#![allow(unused_must_use)]
+
 mod game;
 mod events;
 use game::Game;

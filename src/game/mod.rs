@@ -1,5 +1,6 @@
+use termion::cursor;
+use termion::color::*;
 use termion::raw::*;
-use termion::color;
 use std::io::{self, Write};
 
 pub mod tetromino;
@@ -9,7 +10,7 @@ const HEIGHT: usize = 20;
 const WIDTH:  usize = 10;
 
 pub struct Game {
-    grid: [[Option<Color>; WIDTH]; HEIGHT],
+    grid: [[Option<u8>; WIDTH]; HEIGHT],
     score: u32,
     // pause: bool,
     tetromino: Tetromino,
@@ -21,10 +22,7 @@ impl Game {
 
     pub fn new() -> Self {
         let mut stdout = io::stdout().into_raw_mode().unwrap();
-        write!(stdout, "{}{}", 
-            termion::cursor::Hide,
-            termion::clear::All
-        );
+        write!(stdout, "{}{}", cursor::Hide, termion::clear::All);
         Game {
             grid: [[None; WIDTH]; HEIGHT],
             score: 0,
@@ -35,32 +33,35 @@ impl Game {
         }
     }
 
+    fn write_block(&mut self, i: usize, j: usize) {
+        match self.grid[i][j] {
+            Some(0) => write!(self.out, "{}  {}", Bg(Red),     Bg(Reset)),
+            Some(1) => write!(self.out, "{}  {}", Bg(Green),   Bg(Reset)),
+            Some(2) => write!(self.out, "{}  {}", Bg(Blue),    Bg(Reset)),
+            Some(3) => write!(self.out, "{}  {}", Bg(Cyan),    Bg(Reset)),
+            Some(4) => write!(self.out, "{}  {}", Bg(Magenta), Bg(Reset)),
+            Some(5) => write!(self.out, "{}  {}", Bg(Yellow),  Bg(Reset)),
+            Some(_) => unreachable!(),
+            None    => write!(self.out, "  ")
+        };
+    }
+
     pub fn render(&mut self) {
         self.draw_piece(true);
-        let wall = format!("{} {}", color::Bg(color::White), color::Bg(color::Reset));
-        write!(self.out, "{}Score: {}\r\n",
-            termion::cursor::Goto(1, 1), self.score);
+        let wall = format!("{} {}", Bg(Black), Bg(Reset));
+        write!(self.out, "{}Score: {}\r\n", cursor::Goto(1, 1), self.score);
         for i in 0..HEIGHT {
             write!(self.out, "{}", wall);
-            for j in 0..WIDTH {
-                match self.grid[i][j] {
-                    Some(color) => {
-                        write!(self.out, "{}  {}", 
-                            color.bg_string(), 
-                            color::Bg(color::Reset));
-                    }
-                    None => { write!(self.out, "  "); }
-                }
-            }
+            (0..WIDTH).for_each(|j| self.write_block(i, j));
             write!(self.out, "{}\r\n", wall);
         }
-        write!(self.out, "{}▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀{}\r\n", 
-                color::Fg(color::White), color::Fg(color::Reset));
+        let bottom = (0..2*WIDTH+2).map(|_| "▀").collect::<String>();
+        write!(self.out, "{}{}{}\r\n", Fg(Black), bottom, Fg(Reset));
         self.out.flush();
         self.draw_piece(false);
     }
 
-    pub fn draw_piece(&mut self, draw: bool) {
+    fn draw_piece(&mut self, draw: bool) {
         for cell in &self.tetromino.cells {
             self.grid[cell.0][cell.1] = if draw { 
                 Some(self.tetromino.color) 
@@ -70,16 +71,16 @@ impl Game {
         }
     }
 
-    pub fn clear_lines(&mut self) {
+    fn clear_lines(&mut self) {
         for i in 0..HEIGHT {
             let full = self.grid[i].iter().all(|x| x.is_some());
             if full {
                 self.score += 1;
                 for k in (1..i+1).rev() {
                     let prev_row = self.grid[k-1].clone();
-                    self.grid[k][..].copy_from_slice(&prev_row);
+                    self.grid[k] = prev_row;
                 }
-                self.grid[0][..].copy_from_slice(&[None; WIDTH]);
+                self.grid[0] = [None; WIDTH];
             }
         }
     }
@@ -146,7 +147,7 @@ impl Game {
 
 impl Drop for Game {
     fn drop(&mut self) {
-        write!(self.out, "{}", termion::cursor::Show);
+        write!(self.out, "{}", cursor::Show);
         self.out.flush();
     }
 }
