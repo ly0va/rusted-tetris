@@ -21,4 +21,4 @@ Controls:
 
 ## Demo
 
-
+[![asciicast](https://asciinema.org/a/H4BzRJHDVBnTWOzyJceycu9zV.svg)](https://asciinema.org/a/H4BzRJHDVBnTWOzyJceycu9zV)
