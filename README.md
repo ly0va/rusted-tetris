@@ -17,6 +17,7 @@ To launch, simply run `cargo run`.
 Controls:
 
   - `W/A/S/D` to move and rotate
+  - `Space` to pause
   - `Q` to quit
 
 ## Demo
