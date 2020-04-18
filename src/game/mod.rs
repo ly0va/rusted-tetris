@@ -12,7 +12,7 @@ const WIDTH:  usize = 10;
 pub struct Game {
     grid: [[Option<u8>; WIDTH]; HEIGHT],
     score: u32,
-    // pause: bool,
+    pause: bool,
     tetromino: Tetromino,
     out: RawTerminal<io::Stdout>,
     pub over: bool,
@@ -26,7 +26,7 @@ impl Game {
         Game {
             grid: [[None; WIDTH]; HEIGHT],
             score: 0,
-            // pause: false,
+            pause: false,
             over: false,
             out: stdout,
             tetromino: Tetromino::new_random(WIDTH)
@@ -48,7 +48,7 @@ impl Game {
 
     pub fn render(&mut self) {
         self.draw_piece(true);
-        let wall = format!("{} {}", Bg(Black), Bg(Reset));
+        let wall = format!("{} {}", Bg(White), Bg(Reset));
         write!(self.out, "{}Score: {}\r\n", cursor::Goto(1, 1), self.score);
         for i in 0..HEIGHT {
             write!(self.out, "{}", wall);
@@ -56,7 +56,7 @@ impl Game {
             write!(self.out, "{}\r\n", wall);
         }
         let bottom = (0..2*WIDTH+2).map(|_| "▀").collect::<String>();
-        write!(self.out, "{}{}{}\r\n", Fg(Black), bottom, Fg(Reset));
+        write!(self.out, "{}{}{}\r\n", Fg(White), bottom, Fg(Reset));
         self.out.flush();
         self.draw_piece(false);
     }
@@ -86,6 +86,7 @@ impl Game {
     }
 
     pub fn shift(&mut self, dir: Direction) {
+        if self.pause { return; }
         let (left, right, down) = self.piece_touches();
         let touch = match dir {
             Direction::Left  => left,
@@ -114,6 +115,7 @@ impl Game {
     }
 
     pub fn turn(&mut self) {
+        if self.pause { return; }
         let backup = self.tetromino.cells.clone();
         if self.tetromino.turn().is_ok() { 
             let in_bounds = self.tetromino.cells.iter().all(|cell|
@@ -126,12 +128,14 @@ impl Game {
     }
 
     pub fn hard_drop(&mut self) {
+        if self.pause { return; }
         while !self.piece_touches().2 {
             self.shift(Direction::Down);
         }
     }
 
     pub fn tick(&mut self) {
+        if self.pause { return; }
         if !self.piece_touches().2 {
             self.shift(Direction::Down);
         } else {
@@ -142,6 +146,10 @@ impl Game {
                 self.grid[cell.0][cell.1].is_some()
             );
         }
+    }
+
+    pub fn toggle_pause(&mut self) {
+        self.pause = !self.pause;
     }
 }
 

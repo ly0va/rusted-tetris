@@ -14,11 +14,12 @@ fn main() {
         match event.recv() {
             Ok(Event::Tick) => game.tick(),
             Ok(Event::Input(key)) => match key {
-                Key::Char('a') => game.shift(Direction::Left),
-                Key::Char('d') => game.shift(Direction::Right),
-                Key::Char('w') => game.turn(),
-                Key::Char('s') => game.hard_drop(),
+                Key::Char('a') | Key::Left  => game.shift(Direction::Left),
+                Key::Char('d') | Key::Right => game.shift(Direction::Right),
+                Key::Char('w') | Key::Up    => game.turn(),
+                Key::Char('s') | Key::Down  => game.hard_drop(),
                 Key::Char('q') | Key::Ctrl('c') => break,
+                Key::Char(' ') => game.toggle_pause(),
                 _ => ()
             }
             _ => println!("Error!\r")
