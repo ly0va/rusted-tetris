@@ -48,15 +48,18 @@ impl Game {
 
     pub fn render(&mut self) {
         self.draw_piece(true);
+        write!(self.out, "{}", cursor::Goto(1, 1));
         let wall = format!("{} {}", Bg(White), Bg(Reset));
-        write!(self.out, "{}Score: {}\r\n", cursor::Goto(1, 1), self.score);
         for i in 0..HEIGHT {
             write!(self.out, "{}", wall);
             (0..WIDTH).for_each(|j| self.write_block(i, j));
             write!(self.out, "{}\r\n", wall);
         }
-        let bottom = (0..2*WIDTH+2).map(|_| "▀").collect::<String>();
-        write!(self.out, "{}{}{}\r\n", Fg(White), bottom, Fg(Reset));
+        let bottom = (0..2*WIDTH+2).map(|_| " ").collect::<String>();
+        write!(self.out, "{}{}{}", Bg(White), Fg(Black), bottom);
+        write!(self.out, "{} Score: {}{}{}\r\n",
+            cursor::Goto(1, 1 + HEIGHT as u16),
+            self.score, Bg(Reset), Fg(Reset));
         self.out.flush();
         self.draw_piece(false);
     }
