@@ -72,3 +72,24 @@ impl Tetromino {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn shift() {
+        let mut t = Tetromino::new(0, 0);
+        t.shift(Direction::Down);
+        assert_eq!(t.cells, [(1, 0), (2, 0), (3, 0), (4, 0)]);
+        t.shift(Direction::Right);
+        assert_eq!(t.cells, [(1, 1), (2, 1), (3, 1), (4, 1)]);
+    }
+
+    #[test]
+    fn turn() {
+        let mut t = Tetromino::new(2, 0); // T
+        t.shift(Direction::Right);
+        t.turn();
+        assert_eq!(t.cells, [(1, 2), (1, 1), (1, 0), (2, 1)]);
+    }
+}

@@ -1,6 +1,6 @@
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/lyova-potyomkin/rusted-tetris/Rust)
-
 # Rusted Tetris
+
+[![build](https://github.com/lyova-potyomkin/rusted-tetris/workflows/build/badge.svg)](https://github.com/lyova-potyomkin/rusted-tetris/actions)
 
 Terminal-based Tetris clone written in pure Rust.
 
