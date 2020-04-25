@@ -77,14 +77,13 @@ impl Game {
     fn clear_lines(&mut self) {
         for i in 0..HEIGHT {
             let full = self.grid[i].iter().all(|x| x.is_some());
-            if full {
-                self.score += 1;
-                for k in (1..i+1).rev() {
-                    let prev_row = self.grid[k-1].clone();
-                    self.grid[k] = prev_row;
-                }
-                self.grid[0] = [None; WIDTH];
+            if !full { continue; }
+            self.score += 1;
+            for k in (1..i+1).rev() {
+                let prev_row = self.grid[k-1].clone();
+                self.grid[k] = prev_row;
             }
+            self.grid[0] = [None; WIDTH];
         }
     }
 

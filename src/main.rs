@@ -22,7 +22,10 @@ fn main() {
                 Key::Char(' ') => game.toggle_pause(),
                 _ => ()
             }
-            _ => println!("Error!\r")
+            Err(_) => {
+                println!("Error!\r");
+                break;
+            }
         }
         game.render();
     }
