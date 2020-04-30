@@ -31,4 +31,4 @@ Controls:
 
 ## Demo
 
-[![asciicast](https://asciinema.org/a/H4BzRJHDVBnTWOzyJceycu9zV.svg)](https://asciinema.org/a/H4BzRJHDVBnTWOzyJceycu9zV)
+[![asciicast](https://asciinema.org/a/325414.svg)](https://asciinema.org/a/325414)
