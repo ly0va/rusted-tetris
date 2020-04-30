@@ -81,6 +81,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "rusted-tetris"
+version = "0.1.0"
+dependencies = [
+ "rand 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "termion 1.5.5 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "termion"
 version = "1.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -89,14 +97,6 @@ dependencies = [
  "numtoa 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "redox_syscall 0.1.56 (registry+https://github.com/rust-lang/crates.io-index)",
  "redox_termios 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "tetris"
-version = "0.1.0"
-dependencies = [
- "rand 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "termion 1.5.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
