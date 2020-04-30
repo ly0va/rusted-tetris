@@ -1,6 +1,7 @@
 # Rusted Tetris
 
 [![build](https://github.com/lyova-potyomkin/rusted-tetris/workflows/build/badge.svg)](https://github.com/lyova-potyomkin/rusted-tetris/actions)
+[![aur](https://img.shields.io/badge/aur-rusted--tetris--git-blue)](https://aur.archlinux.org/packages/rusted-tetris-git/)
 
 Terminal-based Tetris clone written in pure Rust.
 
@@ -10,6 +11,12 @@ Terminal-based Tetris clone written in pure Rust.
 git clone https://github.com/lyova-potyomkin/rusted-tetris.git
 cd rusted-tetris
 cargo build
+```
+
+Or, if you use Arch Linux
+
+```bash
+yay -S rusted-tetris-git
 ```
 
 ## Usage
