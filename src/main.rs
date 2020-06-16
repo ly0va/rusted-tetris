@@ -2,8 +2,10 @@
 
 mod game;
 mod events;
+mod tetromino;
+
 use game::Game;
-use game::tetromino::Direction;
+use tetromino::Direction;
 use events::Event;
 use termion::event::Key;
 

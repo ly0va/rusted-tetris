@@ -21,6 +21,7 @@ pub struct Tetromino {
     pub color: u8
 }
 
+
 impl Tetromino {
 
     pub fn new(index: usize, color: u8) -> Self {

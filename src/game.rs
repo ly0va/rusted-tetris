@@ -1,10 +1,10 @@
+#![allow(unused_must_use)]
+
 use termion::cursor;
 use termion::color::*;
 use termion::raw::*;
 use std::io::{self, Write};
-
-pub mod tetromino;
-use tetromino::*;
+use crate::tetromino::*;
 
 const HEIGHT: usize = 20;
 const WIDTH:  usize = 10;
@@ -17,6 +17,7 @@ pub struct Game {
     out: RawTerminal<io::Stdout>,
     pub over: bool,
 }
+
 
 impl Game {
 

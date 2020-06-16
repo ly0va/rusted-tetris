@@ -1,3 +1,5 @@
+#![allow(unused_must_use)]
+
 use std::thread;
 use std::sync::mpsc;
 use std::time::Duration;
