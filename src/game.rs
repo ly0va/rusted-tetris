@@ -54,11 +54,11 @@ impl Game {
         for i in 0..HEIGHT {
             write!(self.out, "{}", wall);
             (0..WIDTH).for_each(|j| self.write_block(i, j));
-            write!(self.out, "{}\r\n", wall);
+            writeln!(self.out, "{}\r", wall);
         }
         let bottom = (0..2*WIDTH+2).map(|_| " ").collect::<String>();
         write!(self.out, "{}{}{}", Bg(White), Fg(Black), bottom);
-        write!(self.out, "{} Score: {}{}{}\r\n",
+        writeln!(self.out, "{} Score: {}{}{}\r",
             cursor::Goto(1, 1 + HEIGHT as u16),
             self.score, Bg(Reset), Fg(Reset));
         self.out.flush();
@@ -81,7 +81,7 @@ impl Game {
             if !full { continue; }
             self.score += 1;
             for k in (1..i+1).rev() {
-                let prev_row = self.grid[k-1].clone();
+                let prev_row = self.grid[k-1];
                 self.grid[k] = prev_row;
             }
             self.grid[0] = [None; WIDTH];
@@ -119,7 +119,7 @@ impl Game {
 
     pub fn turn(&mut self) {
         if self.pause { return; }
-        let backup = self.tetromino.cells.clone();
+        let backup = self.tetromino.cells;
         if self.tetromino.turn().is_ok() { 
             let in_bounds = self.tetromino.cells.iter().all(|cell|
                 cell.0 < HEIGHT && cell.1 < WIDTH

@@ -27,7 +27,7 @@ impl Tetromino {
     pub fn new(index: usize, color: u8) -> Self {
         Tetromino {
             cells: TETROMINOS[index],
-            color: color
+            color
         }
     }
 
