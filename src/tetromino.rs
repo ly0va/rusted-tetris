@@ -1,17 +1,16 @@
+use std::convert::TryInto;
 use rand::{Rng, SeedableRng, rngs::SmallRng};
 
 
 const TETROMINOS: [[(usize, usize); 4]; 7] = [
-    [(0, 0), (1, 0), (2, 0), (3, 0)], 
-    [(0, 0), (1, 0), (2, 0), (0, 1)], 
-    [(0, 0), (1, 0), (2, 0), (1, 1)], 
-    [(0, 0), (1, 0), (2, 0), (2, 1)], 
-    [(0, 0), (1, 0), (2, 1), (1, 1)], 
+    [(0, 0), (1, 0), (2, 0), (3, 0)],
+    [(0, 0), (1, 0), (2, 0), (0, 1)],
+    [(0, 0), (1, 0), (2, 0), (1, 1)],
+    [(0, 0), (1, 0), (2, 0), (2, 1)],
+    [(0, 0), (1, 0), (2, 1), (1, 1)],
     [(0, 1), (1, 0), (2, 0), (1, 1)],
     [(0, 0), (1, 0), (0, 1), (1, 1)]
 ];
-
-pub struct OverflowError;
 
 pub enum Direction {
     Left, Right, Down
@@ -54,21 +53,16 @@ impl Tetromino {
         }
     }
 
-    pub fn turn(&mut self) -> Result<(), OverflowError> {
+    pub fn turn(&mut self) -> Result<(), std::num::TryFromIntError> {
         let center_y = self.cells[1].0 as isize;
         let center_x = self.cells[1].1 as isize;
         for &i in &[0, 2, 3] {
             let y = self.cells[i].0 as isize;
             let x = self.cells[i].1 as isize;
-            let (y, x) = (
-                center_y + (x - center_x), 
-                center_x - (y - center_y)
+            self.cells[i] = (
+                (center_y + (x - center_x)).try_into()?,
+                (center_x - (y - center_y)).try_into()?
             );
-            if y >= 0 && x >= 0 {
-                self.cells[i] = (y as usize, x as usize);
-            } else {
-                return Err(OverflowError);
-            }
         }
         Ok(())
     }

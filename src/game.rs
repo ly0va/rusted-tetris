@@ -67,10 +67,10 @@ impl Game {
 
     fn draw_piece(&mut self, draw: bool) {
         for cell in &self.tetromino.cells {
-            self.grid[cell.0][cell.1] = if draw { 
-                Some(self.tetromino.color) 
+            self.grid[cell.0][cell.1] = if draw {
+                Some(self.tetromino.color)
             } else {
-                None 
+                None
             }
         }
     }
@@ -103,11 +103,11 @@ impl Game {
     fn piece_touches(&self) -> (bool, bool, bool) {
         let cells = self.tetromino.cells;
         let left = cells.iter().any(|cell|
-            cell.1 == 0 
+            cell.1 == 0
             || self.grid[cell.0][cell.1-1].is_some()
         );
         let right = cells.iter().any(|cell|
-            cell.1 == WIDTH-1 
+            cell.1 == WIDTH-1
             || self.grid[cell.0][cell.1+1].is_some()
         );
         let down = cells.iter().any(|cell|
@@ -120,13 +120,13 @@ impl Game {
     pub fn turn(&mut self) {
         if self.pause { return; }
         let backup = self.tetromino.cells;
-        if self.tetromino.turn().is_ok() { 
+        if self.tetromino.turn().is_ok() {
             let in_bounds = self.tetromino.cells.iter().all(|cell|
                 cell.0 < HEIGHT && cell.1 < WIDTH
                 && self.grid[cell.0][cell.1].is_none()
             );
             if in_bounds { return; }
-        } 
+        }
         self.tetromino.cells = backup;
     }
 
