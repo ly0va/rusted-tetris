@@ -1,4 +1,5 @@
-use rand::prelude::*;
+use rand::{Rng, SeedableRng, rngs::SmallRng};
+
 
 const TETROMINOS: [[(usize, usize); 4]; 7] = [
     [(0, 0), (1, 0), (2, 0), (3, 0)], 
@@ -32,7 +33,7 @@ impl Tetromino {
     }
 
     pub fn new_random(width: usize) -> Self {
-        let mut rng = rand::thread_rng();
+        let mut rng = SmallRng::from_entropy();
         let t = rng.gen_range(0, TETROMINOS.len());
         let c = rng.gen_range(0, 6);
         let mut tetromino = Self::new(t, c);
