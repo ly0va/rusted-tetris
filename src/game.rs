@@ -1,8 +1,6 @@
 #![allow(unused_must_use)]
 
-use termion::cursor;
-use termion::color::*;
-use termion::raw::*;
+use termion::{cursor, color::*, raw::*};
 use std::io::{self, Write};
 use crate::tetromino::*;
 
@@ -17,7 +15,6 @@ pub struct Game {
     out: RawTerminal<io::Stdout>,
     pub over: bool,
 }
-
 
 impl Game {
 
@@ -35,13 +32,17 @@ impl Game {
     }
 
     fn write_block(&mut self, i: usize, j: usize) {
+        macro_rules! color {
+            ($c:expr) => { write!(self.out, "{}  {}", Bg($c), Bg(Reset)) }
+        }
+
         match self.grid[i][j] {
-            Some(0) => write!(self.out, "{}  {}", Bg(Red),     Bg(Reset)),
-            Some(1) => write!(self.out, "{}  {}", Bg(Green),   Bg(Reset)),
-            Some(2) => write!(self.out, "{}  {}", Bg(Blue),    Bg(Reset)),
-            Some(3) => write!(self.out, "{}  {}", Bg(Cyan),    Bg(Reset)),
-            Some(4) => write!(self.out, "{}  {}", Bg(Magenta), Bg(Reset)),
-            Some(5) => write!(self.out, "{}  {}", Bg(Yellow),  Bg(Reset)),
+            Some(0) => color!(Red),
+            Some(1) => color!(Green),
+            Some(2) => color!(Blue),
+            Some(3) => color!(Cyan),
+            Some(4) => color!(Yellow),
+            Some(5) => color!(Magenta),
             Some(_) => unreachable!(),
             None    => write!(self.out, "  ")
         };
