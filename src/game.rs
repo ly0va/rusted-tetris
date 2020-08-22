@@ -1,5 +1,3 @@
-#![allow(unused_must_use)]
-
 use termion::{cursor, color::*, raw::*};
 use std::io::{self, Write};
 use crate::tetromino::*;
@@ -18,20 +16,20 @@ pub struct Game {
 
 impl Game {
 
-    pub fn new() -> Self {
-        let mut stdout = io::stdout().into_raw_mode().unwrap();
-        write!(stdout, "{}{}", cursor::Hide, termion::clear::All);
-        Game {
+    pub fn new() -> io::Result<Self> {
+        let mut stdout = io::stdout().into_raw_mode()?;
+        write!(stdout, "{}{}", cursor::Hide, termion::clear::All)?;
+        Ok(Game {
             grid: [[None; WIDTH]; HEIGHT],
             score: 0,
             pause: false,
             over: false,
             out: stdout,
             tetromino: Tetromino::new_random(WIDTH)
-        }
+        })
     }
 
-    fn write_block(&mut self, i: usize, j: usize) {
+    fn write_block(&mut self, i: usize, j: usize) -> io::Result<()> {
         macro_rules! color {
             ($c:expr) => { write!(self.out, "{}  {}", Bg($c), Bg(Reset)) }
         }
@@ -45,25 +43,26 @@ impl Game {
             Some(5) => color!(Magenta),
             Some(_) => unreachable!(),
             None    => write!(self.out, "  ")
-        };
+        }
     }
 
-    pub fn render(&mut self) {
+    pub fn render(&mut self) -> io::Result<()> {
         self.draw_piece(true);
-        write!(self.out, "{}", cursor::Goto(1, 1));
+        write!(self.out, "{}", cursor::Goto(1, 1))?;
         let wall = format!("{} {}", Bg(White), Bg(Reset));
         for i in 0..HEIGHT {
-            write!(self.out, "{}", wall);
-            (0..WIDTH).for_each(|j| self.write_block(i, j));
-            writeln!(self.out, "{}\r", wall);
+            write!(self.out, "{}", wall)?;
+            (0..WIDTH).try_for_each(|j| self.write_block(i, j))?;
+            writeln!(self.out, "{}\r", wall)?;
         }
         let bottom = (0..2*WIDTH+2).map(|_| " ").collect::<String>();
-        write!(self.out, "{}{}{}", Bg(White), Fg(Black), bottom);
+        write!(self.out, "{}{}{}", Bg(White), Fg(Black), bottom)?;
         writeln!(self.out, "{} Score: {}{}{}\r",
             cursor::Goto(1, 1 + HEIGHT as u16),
-            self.score, Bg(Reset), Fg(Reset));
-        self.out.flush();
+            self.score, Bg(Reset), Fg(Reset))?;
+        self.out.flush()?;
         self.draw_piece(false);
+        Ok(())
     }
 
     fn draw_piece(&mut self, draw: bool) {
@@ -158,6 +157,7 @@ impl Game {
 }
 
 impl Drop for Game {
+    #[allow(unused_must_use)]
     fn drop(&mut self) {
         write!(self.out, "{}", cursor::Show);
         self.out.flush();
