@@ -1,6 +1,6 @@
 # Maintainer: Lyova Potyomkin <lyova.potyomkin@gmail.com>
 pkgname='rusted-tetris-git'
-pkgver='0.1.0'
+pkgver='0.1.0.r9'
 pkgrel='1'
 pkgdesc="Terminal-based tetris clone written in pure Rust"
 arch=('x86_64')
@@ -11,18 +11,24 @@ provides=("${pkgname%-git}")
 source=("git+$url")
 md5sums=('SKIP')
 
+pkgver() {
+	cd "$srcdir/${pkgname%-git}"
+    git describe --tags | sed 's/v//;s/-[^-]*$//;s/-/.r/'
+}
+
 build() {
     cd "$srcdir/${pkgname%-git}"
-    cargo build --release --locked
+    cargo build --release
+    strip target/release/${pkgname%-git}
 }
 
 check() {
     cd "$srcdir/${pkgname%-git}"
-    cargo test --release --locked
+    cargo test --release
 }
 
 package() {
     cd "$srcdir/${pkgname%-git}"
-    install -Dm 755 target/release/${pkgname%-git} -t "${pkgdir}/usr/bin"
+    install -Dm 755 target/release/${pkgname%-git} -t "$pkgdir/usr/bin"
     install -Dm 644 LICENSE "$pkgdir/usr/share/licenses/${pkgname%-git}/LICENSE"
 }
