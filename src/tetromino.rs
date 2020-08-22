@@ -1,7 +1,6 @@
 use std::convert::TryInto;
 use rand::{Rng, SeedableRng, rngs::SmallRng};
 
-
 const TETROMINOS: [[(usize, usize); 4]; 7] = [
     [(0, 0), (1, 0), (2, 0), (3, 0)],
     [(0, 0), (1, 0), (2, 0), (0, 1)],
@@ -85,7 +84,7 @@ mod tests {
     fn turn() {
         let mut t = Tetromino::new(2, 0); // T
         t.shift(Direction::Right);
-        t.turn();
+        t.turn().unwrap();
         assert_eq!(t.cells, [(1, 2), (1, 1), (1, 0), (2, 1)]);
     }
 }
