@@ -1,4 +1,3 @@
-use std::convert::TryInto;
 use rand::{Rng, SeedableRng, rngs::SmallRng};
 
 const TETROMINOS: [[(usize, usize); 4]; 7] = [
@@ -52,18 +51,16 @@ impl Tetromino {
         }
     }
 
-    pub fn turn(&mut self) -> Result<(), std::num::TryFromIntError> {
-        let center_y = self.cells[1].0 as isize;
-        let center_x = self.cells[1].1 as isize;
+    pub fn turn(&mut self) -> Option<()> {
+        let (center_y, center_x) = self.cells[1];
         for &i in &[0, 2, 3] {
-            let y = self.cells[i].0 as isize;
-            let x = self.cells[i].1 as isize;
+            let (y, x) = self.cells[i];
             self.cells[i] = (
-                (center_y + (x - center_x)).try_into()?,
-                (center_x - (y - center_y)).try_into()?
+                (center_y + x).checked_sub(center_x)?,
+                (center_x + center_y).checked_sub(y)?
             );
         }
-        Ok(())
+        Some(())
     }
 }
 

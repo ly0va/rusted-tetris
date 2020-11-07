@@ -120,7 +120,7 @@ impl Game {
     pub fn turn(&mut self) {
         if self.pause { return; }
         let backup = self.tetromino.cells;
-        if self.tetromino.turn().is_ok() {
+        if self.tetromino.turn().is_some() {
             let in_bounds = self.tetromino.cells.iter().all(|cell|
                 cell.0 < HEIGHT && cell.1 < WIDTH
                 && self.grid[cell.0][cell.1].is_none()
