@@ -14,13 +14,15 @@ pub fn receiver() -> mpsc::Receiver<Event> {
     let input_tx = timer_tx.clone();
     thread::spawn(move || loop {
         thread::sleep(Duration::from_millis(500));
-        timer_tx.send(Event::Tick).expect("tick failed");
+        timer_tx.send(Event::Tick).expect("sending tick failed");
     });
     thread::spawn(move || {
         let stdin = std::io::stdin();
         for c in stdin.keys() {
             let key = c.unwrap_or(Key::Null);
-            input_tx.send(Event::Input(key)).expect("input failed");
+            input_tx
+                .send(Event::Input(key))
+                .expect("sending input failed");
         }
     });
     event

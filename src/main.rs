@@ -3,28 +3,28 @@ mod game;
 mod tetromino;
 
 use events::Event;
-use game::Game;
+use game::GameControls;
 use std::error::Error;
 use termion::event::Key;
 use tetromino::Direction;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut game = Game::new()?;
+    let mut controls = GameControls::new()?;
     let event = events::receiver();
-    while !game.over {
+    while !controls.game.over {
         match event.recv()? {
-            Event::Tick => game.tick(),
+            Event::Tick => controls.tick(),
             Event::Input(key) => match key {
-                Key::Char('a') | Key::Left => game.shift(Direction::Left),
-                Key::Char('d') | Key::Right => game.shift(Direction::Right),
-                Key::Char('w') | Key::Up => game.turn(),
-                Key::Char('s') | Key::Down => game.hard_drop(),
+                Key::Char('a') | Key::Left => controls.shift(Direction::Left),
+                Key::Char('d') | Key::Right => controls.shift(Direction::Right),
+                Key::Char('w') | Key::Up => controls.turn(),
+                Key::Char('s') | Key::Down => controls.hard_drop(),
                 Key::Char('q') | Key::Ctrl('c') => break,
-                Key::Char(' ') => game.toggle_pause(),
+                Key::Char(' ') => controls.toggle_pause(),
                 _ => (),
             },
         }
-        game.render()?;
+        controls.render()?;
     }
     Ok(())
 }

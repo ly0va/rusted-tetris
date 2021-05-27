@@ -1,4 +1,56 @@
-use rand::{rngs::SmallRng, Rng, SeedableRng};
+use rand::{prelude::SliceRandom, rngs::SmallRng, Rng, SeedableRng};
+use std::fmt;
+use termion::color::{self, Color as TermionColor};
+
+#[derive(Clone, Copy)]
+pub enum Color {
+    None,
+    Red,
+    Green,
+    Blue,
+    Magenta,
+    Yellow,
+    Cyan,
+}
+
+impl Color {
+    const ALL: [Color; 6] = [
+        Self::Red,
+        Self::Green,
+        Self::Blue,
+        Self::Magenta,
+        Self::Yellow,
+        Self::Cyan,
+    ];
+
+    pub fn is_none(&self) -> bool {
+        matches!(self, Self::None)
+    }
+
+    pub fn is_some(&self) -> bool {
+        !matches!(self, Self::None)
+    }
+}
+
+impl fmt::Display for Color {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Red => color::Red.write_bg(f),
+            Self::Green => color::Green.write_bg(f),
+            Self::Blue => color::Blue.write_bg(f),
+            Self::Magenta => color::Magenta.write_bg(f),
+            Self::Yellow => color::Yellow.write_bg(f),
+            Self::Cyan => color::Cyan.write_bg(f),
+            Self::None => Ok(()),
+        }
+    }
+}
+
+pub enum Direction {
+    Left,
+    Right,
+    Down,
+}
 
 const TETROMINOS: [[(usize, usize); 4]; 7] = [
     [(0, 0), (1, 0), (2, 0), (3, 0)],
@@ -10,19 +62,13 @@ const TETROMINOS: [[(usize, usize); 4]; 7] = [
     [(0, 0), (1, 0), (0, 1), (1, 1)],
 ];
 
-pub enum Direction {
-    Left,
-    Right,
-    Down,
-}
-
 pub struct Tetromino {
     pub cells: [(usize, usize); 4],
-    pub color: u8,
+    pub color: Color,
 }
 
 impl Tetromino {
-    pub fn new(index: usize, color: u8) -> Self {
+    pub fn new(index: usize, color: Color) -> Self {
         Tetromino {
             cells: TETROMINOS[index],
             color,
@@ -32,8 +78,8 @@ impl Tetromino {
     pub fn new_random(width: usize) -> Self {
         let mut rng = SmallRng::from_entropy();
         let t = rng.gen_range(0, TETROMINOS.len());
-        let c = rng.gen_range(0, 6);
-        let mut tetromino = Self::new(t, c);
+        let c = Color::ALL.choose(&mut rng).unwrap();
+        let mut tetromino = Self::new(t, *c);
         let center = rng.gen_range(0, width - 2);
         for cell in tetromino.cells.iter_mut() {
             cell.1 += center;
@@ -70,7 +116,7 @@ mod tests {
 
     #[test]
     fn shift() {
-        let mut t = Tetromino::new(0, 0);
+        let mut t = Tetromino::new(0, Color::None);
         t.shift(Direction::Down);
         assert_eq!(t.cells, [(1, 0), (2, 0), (3, 0), (4, 0)]);
         t.shift(Direction::Right);
@@ -79,7 +125,7 @@ mod tests {
 
     #[test]
     fn turn() {
-        let mut t = Tetromino::new(2, 0); // T
+        let mut t = Tetromino::new(2, Color::None); // T
         t.shift(Direction::Right);
         t.turn().unwrap();
         assert_eq!(t.cells, [(1, 2), (1, 1), (1, 0), (2, 1)]);
