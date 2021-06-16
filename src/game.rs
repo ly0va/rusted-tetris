@@ -1,28 +1,13 @@
 use crate::tetromino::*;
-use std::io::{self, Write};
-use termion::{
-    color::{self, Bg, Fg},
-    cursor,
-    raw::*,
-};
 
-const HEIGHT: usize = 20;
-const WIDTH: usize = 10;
-
-pub struct Game {
-    grid: [[Color; WIDTH]; HEIGHT],
-    score: u32,
+pub struct Game<const WIDTH: usize, const HEIGHT: usize> {
+    pub grid: [[Color; WIDTH]; HEIGHT],
+    pub score: u32,
     tetromino: Tetromino,
     pub over: bool,
 }
 
-pub struct GameControls {
-    pub game: Game,
-    pub pause: bool,
-    out: RawTerminal<io::Stdout>,
-}
-
-impl Game {
+impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
     pub fn new() -> Self {
         Game {
             grid: [[Color::None; WIDTH]; HEIGHT],
@@ -32,7 +17,7 @@ impl Game {
         }
     }
 
-    fn draw_piece(&mut self, draw: bool) {
+    pub fn draw_piece(&mut self, draw: bool) {
         for cell in &self.tetromino.cells {
             self.grid[cell.0][cell.1] = if draw {
                 self.tetromino.color
@@ -115,83 +100,5 @@ impl Game {
                 .iter()
                 .any(|cell| self.grid[cell.0][cell.1].is_some());
         }
-    }
-}
-
-impl GameControls {
-    pub fn new() -> io::Result<Self> {
-        let mut stdout = io::stdout().into_raw_mode()?;
-        write!(stdout, "{}{}", cursor::Hide, termion::clear::All)?;
-        Ok(GameControls {
-            game: Game::new(),
-            pause: false,
-            out: stdout,
-        })
-    }
-
-    pub fn toggle_pause(&mut self) {
-        self.pause = !self.pause;
-    }
-
-    pub fn render(&mut self) -> io::Result<()> {
-        self.game.draw_piece(true);
-        write!(self.out, "{}", cursor::Goto(1, 1))?;
-        let wall = format!("{} {}", Bg(color::White), Bg(color::Reset));
-        for i in 0..HEIGHT {
-            let row = (0..WIDTH)
-                .map(|j| format!("{}  {}", self.game.grid[i][j], Bg(color::Reset)))
-                .collect::<String>();
-            writeln!(self.out, "{}{}{}\r", wall, row, wall)?;
-        }
-        let bottom = (0..=WIDTH).map(|_| "  ").collect::<String>();
-        write!(
-            self.out,
-            "{}{}{}",
-            Bg(color::White),
-            Fg(color::Black),
-            bottom
-        )?;
-        writeln!(
-            self.out,
-            "{} Score: {}{}{}\r",
-            cursor::Goto(1, 1 + HEIGHT as u16),
-            self.game.score,
-            Bg(color::Reset),
-            Fg(color::Reset)
-        )?;
-        self.game.draw_piece(false);
-        self.out.flush()
-    }
-
-    pub fn shift(&mut self, dir: Direction) {
-        if !self.pause {
-            self.game.shift(dir);
-        }
-    }
-
-    pub fn turn(&mut self) {
-        if !self.pause {
-            self.game.turn();
-        }
-    }
-
-    pub fn hard_drop(&mut self) {
-        if !self.pause {
-            self.game.hard_drop();
-        }
-    }
-
-    pub fn tick(&mut self) {
-        if !self.pause {
-            self.game.tick();
-        }
-    }
-}
-
-impl Drop for GameControls {
-    #[allow(unused_must_use)]
-    fn drop(&mut self) {
-        write!(self.out, "{}", cursor::Show);
-        self.out.flush();
     }
 }

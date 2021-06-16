@@ -4,6 +4,8 @@ use std::time::Duration;
 use termion::event::Key;
 use termion::input::TermRead;
 
+const TICK_INTERVAL: Duration = Duration::from_millis(500);
+
 pub enum Event {
     Tick,
     Input(Key),
@@ -13,7 +15,7 @@ pub fn receiver() -> mpsc::Receiver<Event> {
     let (timer_tx, event) = mpsc::channel();
     let input_tx = timer_tx.clone();
     thread::spawn(move || loop {
-        thread::sleep(Duration::from_millis(500));
+        thread::sleep(TICK_INTERVAL);
         timer_tx.send(Event::Tick).expect("sending tick failed");
     });
     thread::spawn(move || {
