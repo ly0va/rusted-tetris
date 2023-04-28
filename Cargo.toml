@@ -2,10 +2,13 @@
 name = "rusted-tetris"
 version = "0.1.0"
 authors = ["Lyova Potyomkin <lyova.potyomkin@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
+log = "0.4"
+pretty_env_logger = "0.4"
 rand = { version = "0.7", features = ["small_rng", "alloc"] }
+rayon = "1.7"
 termion = "1.5"
 
 [profile.release]

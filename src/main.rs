@@ -11,6 +11,28 @@ use termion::event::Key;
 use tetromino::Direction;
 
 fn main() -> Result<(), Box<dyn Error>> {
+    pretty_env_logger::init();
+    evolve();
+    Ok(())
+    // play()
+}
+
+fn evolve() {
+    let mut population = ai::Population::new_random(
+        10000,
+        vec![
+            Box::new(ai::genes::MaxHeight),
+            Box::new(ai::genes::Holes),
+            Box::new(ai::genes::Bumpiness),
+        ],
+    );
+
+    population.evolve(100);
+    println!("{:?}", population.champion());
+}
+
+// TODO: use anyhow for errors
+fn play() -> Result<(), Box<dyn Error>> {
     let mut controller = GameController::new()?;
     let event = events::receiver();
     while !controller.game.over {

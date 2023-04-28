@@ -1,8 +1,10 @@
-use crate::game::StandardGame;
+use crate::game::{Game, StandardGame, WIDTH};
+use crate::tetromino::Direction;
 use rand::distributions::WeightedIndex;
 use rand::prelude::*;
+use rayon::prelude::*;
 
-mod genes;
+pub mod genes;
 
 const SCORE_LIMIT: u32 = 1000;
 
@@ -17,12 +19,12 @@ pub struct DNA(pub Vec<f64>);
 impl DNA {
     pub fn new_random(size: usize) -> Self {
         let rng = &mut rand::thread_rng();
-        DNA(vec![rng.gen_range(-1.0, 1.0); size]).normalize()
+        DNA((0..size).map(|_| rng.gen_range(-1., 1.)).collect()).normalize()
     }
 
     pub fn normalize(mut self) -> Self {
-        let sum: f64 = self.0.iter().sum();
-        self.0.iter_mut().for_each(|x| *x /= sum);
+        let norm = self.0.iter().map(|x| x * x).sum::<f64>().sqrt();
+        self.0.iter_mut().for_each(|x| *x /= norm);
         self
     }
 
@@ -38,7 +40,7 @@ impl DNA {
     pub fn mutate(mut self, rate: f64) -> Self {
         let rng = &mut rand::thread_rng();
         for x in self.0.iter_mut() {
-            if rng.gen::<f64>() < rate {
+            if rng.gen_range(0., 1.) < rate {
                 *x += rng.gen_range(-0.1, 0.1);
             }
         }
@@ -48,11 +50,11 @@ impl DNA {
 
 pub struct Population {
     dna: Vec<DNA>,
-    genes: Vec<Box<dyn Gene>>,
+    genes: Vec<Box<dyn Gene + Sync>>,
 }
 
 impl Population {
-    pub fn new_random(size: usize, genes: Vec<Box<dyn Gene>>) -> Self {
+    pub fn new_random(size: usize, genes: Vec<Box<dyn Gene + Sync>>) -> Self {
         let mut dna = Vec::with_capacity(size);
         for _ in 0..size {
             dna.push(DNA::new_random(genes.len()));
@@ -68,23 +70,39 @@ impl Population {
             .sum()
     }
 
-    pub fn simulate(&self, index: usize) -> f64 {
+    pub fn simulate(&self, index: usize) -> u32 {
+        // TODO: fix seed for each game
         let mut game = StandardGame::new();
         while !game.over {
-            // TODO: evaluaate all possible shifts/rotations
-            // and choose the best one based on the evaluation
-            // TODO: fix seed for each game
+            let states = game.all_possible_states();
+            let (instinct, &shifts, &rotations) = states
+                .iter()
+                .map(|(state, shifts, rotations)| (self.instinct(index, state), shifts, rotations))
+                .max_by(|(a, _, _), (b, _, _)| a.partial_cmp(b).unwrap())
+                .unwrap();
+            for _ in 0..WIDTH {
+                game.shift(Direction::Left);
+            }
+            for _ in 0..shifts {
+                game.shift(Direction::Right);
+            }
+            for _ in 0..rotations {
+                game.turn();
+            }
+            game.hard_drop();
             game.tick();
+            assert_eq!(instinct, self.instinct(index, &game));
             if game.score >= SCORE_LIMIT {
                 break;
             }
         }
-        game.score as f64
+        log::debug!("Score: {}", game.score);
+        game.score
     }
 
-    pub fn rank_generation(&self) -> Vec<f64> {
+    pub fn rank_generation(&self) -> Vec<u32> {
         self.dna
-            .iter()
+            .par_iter()
             .enumerate()
             .map(|(index, _)| self.simulate(index))
             .collect()
@@ -94,19 +112,68 @@ impl Population {
         let rng = &mut rand::thread_rng();
         let mut new_dna = Vec::with_capacity(self.dna.len());
         let rank = self.rank_generation();
+        log::info!(
+            "Champion (score {}): {:?}",
+            *rank.iter().max().unwrap(),
+            self.champion()
+        );
         let dist = WeightedIndex::new(rank).expect("This generation is shit");
         for _ in 0..self.dna.len() {
             let a = dist.sample(rng);
             let b = dist.sample(rng);
-            new_dna.push(self.dna[a].crossover(&self.dna[b]));
+            // TODO: vanishing rate
+            new_dna.push(self.dna[a].crossover(&self.dna[b]).mutate(0.));
         }
         self.dna = new_dna;
     }
 
     pub fn evolve(&mut self, generations: usize) {
-        for _ in 0..generations {
+        for gen in 0..generations {
+            log::info!("Growing generation #{gen}");
             self.next_generation();
         }
+        log::info!("Evolution complete");
+    }
+
+    pub fn champion(&self) -> DNA {
+        let rank = self.rank_generation();
+        self.dna
+            .iter()
+            .enumerate()
+            .max_by_key(|(index, _)| rank[*index])
+            .unwrap()
+            .1
+            .clone()
     }
     // TODO: add a lot of logs
+}
+
+impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
+    fn all_possible_states(&self) -> Vec<(Self, usize, usize)> {
+        // we assume we have the state where the new tetromino has just spawned
+        // we need to check all possible shifts to the right combined with
+        // all possible rotations
+        let mut states = vec![];
+        // always do shifts first, then rotations! FIXME still check if it rotates correctly
+        for shifts in 0..WIDTH {
+            let mut game = self.clone();
+            // first, shift it all the way to the left.
+            for _ in 0..WIDTH {
+                game.shift(Direction::Left);
+            }
+            for _ in 0..shifts {
+                game.shift(Direction::Right);
+            }
+            for rotations in 0..4 {
+                let mut game = game.clone();
+                for _ in 0..rotations {
+                    game.turn();
+                }
+                game.hard_drop();
+                game.tick(); // We need a tick to clear lines
+                states.push((game, shifts, rotations));
+            }
+        }
+        states
+    }
 }
