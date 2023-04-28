@@ -7,6 +7,8 @@ mod tetromino;
 use controls::{Action, GameController};
 use events::Event;
 use std::error::Error;
+use std::time::Duration;
+
 use termion::event::Key;
 use tetromino::Direction;
 
@@ -29,6 +31,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn bot() -> Result<(), Box<dyn Error>> {
     let mut controller = GameController::new()?;
+    let event = events::receiver();
     let bot = ai::Population::single(
         ai::DNA(vec![
             -0.8909047183906003,
@@ -46,6 +49,11 @@ fn bot() -> Result<(), Box<dyn Error>> {
         ],
     );
     while !controller.game.over {
+        while let Ok(event) = event.try_recv() {
+            if let Event::Input(Key::Ctrl('c')) = event {
+                return Ok(());
+            }
+        }
         let (shifts, rotations) = bot.best_actions(0, &controller.game);
         for _ in 0..10 {
             controller.game.shift(Direction::Left);
@@ -54,16 +62,19 @@ fn bot() -> Result<(), Box<dyn Error>> {
         for _ in 0..shifts {
             controller.game.shift(Direction::Right);
             controller.render()?;
-            std::thread::sleep(std::time::Duration::from_millis(100));
+            std::thread::sleep(Duration::from_millis(100));
         }
         for _ in 0..rotations {
             controller.game.turn();
             controller.render()?;
-            std::thread::sleep(std::time::Duration::from_millis(100));
+            std::thread::sleep(Duration::from_millis(100));
         }
         controller.game.hard_drop();
+        controller.render()?;
+        std::thread::sleep(Duration::from_millis(100));
         controller.game.tick();
         controller.render()?;
+        std::thread::sleep(Duration::from_millis(100));
     }
     Ok(())
 }

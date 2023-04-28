@@ -11,7 +11,6 @@ const SCORE_LIMIT: u32 = 1000;
 pub trait Gene {
     fn evaluate(&self, state: &StandardGame) -> f64;
 }
-// TODO: implement genes
 
 #[derive(Clone, Debug, Default)]
 pub struct DNA(pub Vec<f64>);
@@ -140,7 +139,7 @@ impl Population {
             let a = dist.sample(rng);
             let b = dist.sample(rng);
             // TODO: vanishing rate
-            new_dna.push(self.dna[a].crossover(&self.dna[b]).mutate(0.));
+            new_dna.push(self.dna[a].crossover(&self.dna[b]).mutate(0.1));
         }
         self.dna = new_dna;
     }
