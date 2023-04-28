@@ -31,12 +31,16 @@ fn bot() -> Result<(), Box<dyn Error>> {
     let mut controller = GameController::new()?;
     let bot = ai::Population::single(
         ai::DNA(vec![
-            -0.5142478354737161,
-            -0.6636269359013344,
-            -0.5432756700394414,
+            -0.8909047183906003,
+            -0.08339877358128837,
+            0.39718230475939464,
+            -0.0781154639711134,
+            -0.18835503282125332,
         ]),
         vec![
+            Box::new(ai::genes::TotalHeight),
             Box::new(ai::genes::MaxHeight),
+            Box::new(ai::genes::LinesCleared),
             Box::new(ai::genes::Holes),
             Box::new(ai::genes::Bumpiness),
         ],
@@ -68,7 +72,9 @@ fn evolve() {
     let mut population = ai::Population::new_random(
         10000,
         vec![
+            Box::new(ai::genes::TotalHeight),
             Box::new(ai::genes::MaxHeight),
+            Box::new(ai::genes::LinesCleared),
             Box::new(ai::genes::Holes),
             Box::new(ai::genes::Bumpiness),
         ],

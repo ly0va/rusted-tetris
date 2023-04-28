@@ -55,6 +55,7 @@ pub struct Population {
 
 impl Population {
     pub fn single(dna: DNA, genes: Vec<Box<dyn Gene + Sync>>) -> Self {
+        assert_eq!(genes.len(), dna.0.len());
         Self {
             dna: vec![dna],
             genes,
@@ -107,8 +108,8 @@ impl Population {
                 game.turn();
             }
             game.hard_drop();
-            game.tick();
             assert_eq!(instinct, self.instinct(index, &game));
+            game.tick();
             if game.score >= SCORE_LIMIT {
                 break;
             }
@@ -186,7 +187,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
                     game.turn();
                 }
                 game.hard_drop();
-                game.tick(); // We need a tick to clear lines
+                // game.tick(); // Ticking is done inside Gene.evaluate
                 states.push((game, shifts, rotations));
             }
         }

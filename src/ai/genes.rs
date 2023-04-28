@@ -4,9 +4,13 @@ use crate::game::{StandardGame, HEIGHT, WIDTH};
 pub struct Holes;
 pub struct MaxHeight;
 pub struct Bumpiness;
+pub struct TotalHeight;
+pub struct LinesCleared;
 
 impl Gene for Holes {
     fn evaluate(&self, state: &StandardGame) -> f64 {
+        let mut state = state.clone();
+        state.tick();
         let mut holes = 0;
         for x in 0..WIDTH {
             let mut found = false;
@@ -24,6 +28,8 @@ impl Gene for Holes {
 
 impl Gene for MaxHeight {
     fn evaluate(&self, state: &StandardGame) -> f64 {
+        let mut state = state.clone();
+        state.tick();
         let mut max_height = 0;
         for x in 0..WIDTH {
             for y in 0..HEIGHT {
@@ -39,6 +45,8 @@ impl Gene for MaxHeight {
 
 impl Gene for Bumpiness {
     fn evaluate(&self, state: &StandardGame) -> f64 {
+        let mut state = state.clone();
+        state.tick();
         let mut bumpiness = 0;
         let mut prev_height = 0;
         for x in 0..WIDTH {
@@ -55,6 +63,32 @@ impl Gene for Bumpiness {
             prev_height = height;
         }
         bumpiness as f64
+    }
+}
+
+impl Gene for TotalHeight {
+    fn evaluate(&self, state: &StandardGame) -> f64 {
+        let mut state = state.clone();
+        state.tick();
+        let mut total_height = 0;
+        for x in 0..WIDTH {
+            for y in 0..HEIGHT {
+                if state.grid[y][x].is_some() {
+                    total_height += HEIGHT - y;
+                    break;
+                }
+            }
+        }
+        total_height as f64
+    }
+}
+
+impl Gene for LinesCleared {
+    fn evaluate(&self, state: &StandardGame) -> f64 {
+        let mut state = state.clone();
+        let prev_score = state.score;
+        state.tick();
+        (state.score - prev_score) as f64
     }
 }
 
