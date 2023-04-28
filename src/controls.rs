@@ -10,7 +10,7 @@ use termion::{
 const HEIGHT: usize = 20;
 const WIDTH: usize = 10;
 
-pub struct GameControls {
+pub struct GameController {
     pub game: Game<WIDTH, HEIGHT>,
     pub pause: bool,
     out: RawTerminal<io::Stdout>,
@@ -23,11 +23,11 @@ pub enum Action {
     Tick,
 }
 
-impl GameControls {
+impl GameController {
     pub fn new() -> io::Result<Self> {
         let mut stdout = io::stdout().into_raw_mode()?;
         write!(stdout, "{}{}", cursor::Hide, termion::clear::All)?;
-        Ok(GameControls {
+        Ok(GameController {
             game: Game::new(),
             pause: false,
             out: stdout,
@@ -81,7 +81,7 @@ impl GameControls {
     }
 }
 
-impl Drop for GameControls {
+impl Drop for GameController {
     #[allow(unused_must_use)]
     fn drop(&mut self) {
         write!(self.out, "{}", cursor::Show);
