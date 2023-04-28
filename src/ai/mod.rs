@@ -54,6 +54,13 @@ pub struct Population {
 }
 
 impl Population {
+    pub fn single(dna: DNA, genes: Vec<Box<dyn Gene + Sync>>) -> Self {
+        Self {
+            dna: vec![dna],
+            genes,
+        }
+    }
+
     pub fn new_random(size: usize, genes: Vec<Box<dyn Gene + Sync>>) -> Self {
         let mut dna = Vec::with_capacity(size);
         for _ in 0..size {
@@ -68,6 +75,16 @@ impl Population {
             .zip(self.dna[index].0.iter())
             .map(|(gene, weight)| gene.evaluate(state) * weight)
             .sum()
+    }
+
+    pub fn best_actions(&self, index: usize, game: &StandardGame) -> (usize, usize) {
+        let states = game.all_possible_states();
+        let (_, &shifts, &rotations) = states
+            .iter()
+            .map(|(state, shifts, rotations)| (self.instinct(index, state), shifts, rotations))
+            .max_by(|(a, _, _), (b, _, _)| a.partial_cmp(b).unwrap())
+            .unwrap();
+        (shifts, rotations)
     }
 
     pub fn simulate(&self, index: usize) -> u32 {
@@ -115,7 +132,7 @@ impl Population {
         log::info!(
             "Champion (score {}): {:?}",
             *rank.iter().max().unwrap(),
-            self.champion()
+            self.champion(&rank)
         );
         let dist = WeightedIndex::new(rank).expect("This generation is shit");
         for _ in 0..self.dna.len() {
@@ -135,8 +152,7 @@ impl Population {
         log::info!("Evolution complete");
     }
 
-    pub fn champion(&self) -> DNA {
-        let rank = self.rank_generation();
+    pub fn champion(&self, rank: &[u32]) -> DNA {
         self.dna
             .iter()
             .enumerate()

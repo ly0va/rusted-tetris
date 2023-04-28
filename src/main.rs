@@ -12,9 +12,56 @@ use tetromino::Direction;
 
 fn main() -> Result<(), Box<dyn Error>> {
     pretty_env_logger::init();
-    evolve();
+    match std::env::args().nth(1) {
+        None => play(),
+        Some(cmd) => {
+            if cmd == "evolve" {
+                evolve();
+                Ok(())
+            } else if cmd == "bot" {
+                bot()
+            } else {
+                Err("unknown command".into())
+            }
+        }
+    }
+}
+
+fn bot() -> Result<(), Box<dyn Error>> {
+    let mut controller = GameController::new()?;
+    let bot = ai::Population::single(
+        ai::DNA(vec![
+            -0.5142478354737161,
+            -0.6636269359013344,
+            -0.5432756700394414,
+        ]),
+        vec![
+            Box::new(ai::genes::MaxHeight),
+            Box::new(ai::genes::Holes),
+            Box::new(ai::genes::Bumpiness),
+        ],
+    );
+    while !controller.game.over {
+        let (shifts, rotations) = bot.best_actions(0, &controller.game);
+        for _ in 0..10 {
+            controller.game.shift(Direction::Left);
+            controller.render()?;
+        }
+        for _ in 0..shifts {
+            controller.game.shift(Direction::Right);
+            controller.render()?;
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+        for _ in 0..rotations {
+            controller.game.turn();
+            controller.render()?;
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+        controller.game.hard_drop();
+        controller.game.tick();
+        controller.render()?;
+    }
     Ok(())
-    // play()
 }
 
 fn evolve() {
@@ -28,7 +75,6 @@ fn evolve() {
     );
 
     population.evolve(100);
-    println!("{:?}", population.champion());
 }
 
 // TODO: use anyhow for errors
