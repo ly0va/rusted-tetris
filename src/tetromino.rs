@@ -2,7 +2,7 @@ use rand::{prelude::SliceRandom, rngs::SmallRng, Rng, SeedableRng};
 use std::fmt;
 use termion::color::{self, Color as TermionColor};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum Color {
     None,
     Red,
@@ -62,6 +62,7 @@ const TETROMINOS: [[(usize, usize); 4]; 7] = [
     [(0, 0), (1, 0), (0, 1), (1, 1)],
 ];
 
+#[derive(Clone, Debug)]
 pub struct Tetromino {
     pub cells: [(usize, usize); 4],
     pub color: Color,

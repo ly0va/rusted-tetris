@@ -1,3 +1,4 @@
+mod ai;
 mod controls;
 mod events;
 mod game;

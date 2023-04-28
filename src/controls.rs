@@ -1,4 +1,4 @@
-use crate::game::Game;
+use crate::game::{StandardGame, HEIGHT, WIDTH};
 use crate::tetromino::Direction;
 use std::io::{self, Write};
 use termion::{
@@ -7,11 +7,8 @@ use termion::{
     raw::*,
 };
 
-const HEIGHT: usize = 20;
-const WIDTH: usize = 10;
-
 pub struct GameController {
-    pub game: Game<WIDTH, HEIGHT>,
+    pub game: StandardGame,
     pub pause: bool,
     out: RawTerminal<io::Stdout>,
 }
@@ -28,7 +25,7 @@ impl GameController {
         let mut stdout = io::stdout().into_raw_mode()?;
         write!(stdout, "{}{}", cursor::Hide, termion::clear::All)?;
         Ok(GameController {
-            game: Game::new(),
+            game: StandardGame::new(),
             pause: false,
             out: stdout,
         })

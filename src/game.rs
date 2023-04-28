@@ -1,9 +1,14 @@
 use crate::tetromino::*;
 
+pub const WIDTH: usize = 10;
+pub const HEIGHT: usize = 20;
+pub type StandardGame = Game<WIDTH, HEIGHT>;
+
+#[derive(Clone, Debug)]
 pub struct Game<const WIDTH: usize, const HEIGHT: usize> {
     pub grid: [[Color; WIDTH]; HEIGHT],
     pub score: u32,
-    tetromino: Tetromino,
+    pub tetromino: Tetromino,
     pub over: bool,
 }
 
