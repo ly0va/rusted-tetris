@@ -70,7 +70,7 @@ impl GameController {
             return;
         }
         match action {
-            Action::Turn => self.game.turn(),
+            Action::Turn => self.game.rotate(),
             Action::Tick => self.game.tick(),
             Action::HardDrop => self.game.hard_drop(),
             Action::Shift(dir) => self.game.shift(dir),

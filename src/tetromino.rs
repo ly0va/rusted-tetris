@@ -1,4 +1,4 @@
-use rand::{prelude::SliceRandom, rngs::SmallRng, Rng, SeedableRng};
+use rand::{prelude::SliceRandom, Rng};
 use std::fmt;
 use termion::color::{self, Color as TermionColor};
 
@@ -76,10 +76,9 @@ impl Tetromino {
         }
     }
 
-    pub fn new_random(width: usize) -> Self {
-        let mut rng = SmallRng::from_entropy();
+    pub fn new_with_rng(width: usize, rng: &mut impl Rng) -> Self {
         let t = rng.gen_range(0, TETROMINOS.len());
-        let c = Color::ALL.choose(&mut rng).unwrap();
+        let c = Color::ALL.choose(rng).unwrap();
         let mut tetromino = Self::new(t, *c);
         let center = rng.gen_range(0, width - 2);
         for cell in tetromino.cells.iter_mut() {
@@ -98,7 +97,7 @@ impl Tetromino {
         }
     }
 
-    pub fn turn(&mut self) -> Option<()> {
+    pub fn rotate(&mut self) -> Option<()> {
         let (center_y, center_x) = self.cells[1];
         for &i in &[0, 2, 3] {
             let (y, x) = self.cells[i];
@@ -128,7 +127,7 @@ mod tests {
     fn turn() {
         let mut t = Tetromino::new(2, Color::None); // T
         t.shift(Direction::Right);
-        t.turn().unwrap();
+        t.rotate().unwrap();
         assert_eq!(t.cells, [(1, 2), (1, 1), (1, 0), (2, 1)]);
     }
 }

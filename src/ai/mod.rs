@@ -7,6 +7,7 @@ use rayon::prelude::*;
 pub mod genes;
 
 const SCORE_LIMIT: u32 = 1000;
+const MOVE_LIMIT: u32 = 1000;
 
 pub trait Gene {
     fn evaluate(&self, state: &StandardGame) -> f64;
@@ -16,8 +17,7 @@ pub trait Gene {
 pub struct DNA(pub Vec<f64>);
 
 impl DNA {
-    pub fn new_random(size: usize) -> Self {
-        let rng = &mut rand::thread_rng();
+    pub fn new_random(size: usize, rng: &mut impl Rng) -> Self {
         DNA((0..size).map(|_| rng.gen_range(-1., 1.)).collect()).normalize()
     }
 
@@ -36,8 +36,7 @@ impl DNA {
         DNA(child).normalize()
     }
 
-    pub fn mutate(mut self, rate: f64) -> Self {
-        let rng = &mut rand::thread_rng();
+    pub fn mutate(mut self, rate: f64, rng: &mut impl Rng) -> Self {
         for x in self.0.iter_mut() {
             if rng.gen_range(0., 1.) < rate {
                 *x += rng.gen_range(-0.1, 0.1);
@@ -50,6 +49,7 @@ impl DNA {
 pub struct Population {
     dna: Vec<DNA>,
     genes: Vec<Box<dyn Gene + Sync>>,
+    rng: SmallRng,
 }
 
 impl Population {
@@ -58,15 +58,17 @@ impl Population {
         Self {
             dna: vec![dna],
             genes,
+            rng: SmallRng::from_entropy(),
         }
     }
 
-    pub fn new_random(size: usize, genes: Vec<Box<dyn Gene + Sync>>) -> Self {
+    pub fn new(size: usize, genes: Vec<Box<dyn Gene + Sync>>, seed: u64) -> Self {
+        let mut rng = SmallRng::seed_from_u64(seed);
         let mut dna = Vec::with_capacity(size);
         for _ in 0..size {
-            dna.push(DNA::new_random(genes.len()));
+            dna.push(DNA::new_random(genes.len(), &mut rng));
         }
-        Population { dna, genes }
+        Population { dna, genes, rng }
     }
 
     pub fn instinct(&self, index: usize, state: &StandardGame) -> f64 {
@@ -87,16 +89,11 @@ impl Population {
         (shifts, rotations)
     }
 
-    pub fn simulate(&self, index: usize) -> u32 {
-        // TODO: fix seed for each game
-        let mut game = StandardGame::new();
+    pub fn simulate(&self, index: usize, seed: u64) -> u32 {
+        let mut game = StandardGame::new_with_seed(seed);
+        let mut moves = 0;
         while !game.over {
-            let states = game.all_possible_states();
-            let (instinct, &shifts, &rotations) = states
-                .iter()
-                .map(|(state, shifts, rotations)| (self.instinct(index, state), shifts, rotations))
-                .max_by(|(a, _, _), (b, _, _)| a.partial_cmp(b).unwrap())
-                .unwrap();
+            let (shifts, rotations) = self.best_actions(index, &game);
             for _ in 0..WIDTH {
                 game.shift(Direction::Left);
             }
@@ -104,12 +101,15 @@ impl Population {
                 game.shift(Direction::Right);
             }
             for _ in 0..rotations {
-                game.turn();
+                game.rotate();
             }
             game.hard_drop();
-            assert_eq!(instinct, self.instinct(index, &game));
             game.tick();
             if game.score >= SCORE_LIMIT {
+                break;
+            }
+            moves += 1;
+            if moves >= MOVE_LIMIT {
                 break;
             }
         }
@@ -117,29 +117,50 @@ impl Population {
         game.score
     }
 
-    pub fn rank_generation(&self) -> Vec<u32> {
+    pub fn rank_generation(&self, seed: u64) -> Vec<u32> {
         self.dna
             .par_iter()
             .enumerate()
-            .map(|(index, _)| self.simulate(index))
+            .map(|(index, _)| self.simulate(index, seed))
             .collect()
     }
 
     pub fn next_generation(&mut self) {
-        let rng = &mut rand::thread_rng();
         let mut new_dna = Vec::with_capacity(self.dna.len());
-        let rank = self.rank_generation();
+        // Do X rankings for each generation
+        let mut global_rank = vec![0; self.dna.len()];
+        const NUMBER_OF_SIMULATIONS: usize = 10;
+        for _ in 0..NUMBER_OF_SIMULATIONS {
+            // Seed is fixed for each generation
+            let seed = self.rng.gen();
+            let rank = self.rank_generation(seed);
+            // log::info!(
+            //     "Champion (score {}): {:?}",
+            //     *rank.iter().max().unwrap(),
+            //     self.champion(&rank)
+            // );
+            global_rank
+                .iter_mut()
+                .zip(rank.iter())
+                .for_each(|(a, b)| *a += b);
+        }
         log::info!(
             "Champion (score {}): {:?}",
-            *rank.iter().max().unwrap(),
-            self.champion(&rank)
+            *global_rank.iter().max().unwrap() / NUMBER_OF_SIMULATIONS as u32,
+            self.champion(&global_rank)
         );
-        let dist = WeightedIndex::new(rank).expect("This generation is shit");
+
+        let dist = WeightedIndex::new(global_rank /* .into_iter().map(|x| x * x) */)
+            .expect("This generation is shit");
         for _ in 0..self.dna.len() {
-            let a = dist.sample(rng);
-            let b = dist.sample(rng);
+            let a = dist.sample(&mut self.rng);
+            let b = dist.sample(&mut self.rng);
             // TODO: vanishing rate
-            new_dna.push(self.dna[a].crossover(&self.dna[b]).mutate(0.1));
+            new_dna.push(
+                self.dna[a]
+                    .crossover(&self.dna[b])
+                    .mutate(0.2, &mut self.rng),
+            );
         }
         self.dna = new_dna;
     }
@@ -147,7 +168,9 @@ impl Population {
     pub fn evolve(&mut self, generations: usize) {
         for gen in 0..generations {
             log::info!("Growing generation #{gen}");
+            let now = std::time::Instant::now();
             self.next_generation();
+            log::info!("Generation grew up in {:?}", now.elapsed());
         }
         log::info!("Evolution complete");
     }
@@ -170,23 +193,23 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
         // we need to check all possible shifts to the right combined with
         // all possible rotations
         let mut states = vec![];
-        // always do shifts first, then rotations! FIXME still check if it rotates correctly
+        // always do shifts first, then rotations
+        // first, shift it all the way to the left
+        let mut game = self.clone();
+        for _ in 0..WIDTH {
+            game.shift(Direction::Left);
+        }
         for shifts in 0..WIDTH {
-            let mut game = self.clone();
-            // first, shift it all the way to the left.
-            for _ in 0..WIDTH {
-                game.shift(Direction::Left);
-            }
+            let mut game = game.clone();
             for _ in 0..shifts {
                 game.shift(Direction::Right);
             }
             for rotations in 0..4 {
                 let mut game = game.clone();
                 for _ in 0..rotations {
-                    game.turn();
+                    game.rotate();
                 }
                 game.hard_drop();
-                // game.tick(); // Ticking is done inside Gene.evaluate
                 states.push((game, shifts, rotations));
             }
         }

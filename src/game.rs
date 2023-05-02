@@ -1,4 +1,5 @@
 use crate::tetromino::*;
+use rand::prelude::{SeedableRng, SmallRng};
 
 pub const WIDTH: usize = 10;
 pub const HEIGHT: usize = 20;
@@ -10,16 +11,23 @@ pub struct Game<const WIDTH: usize, const HEIGHT: usize> {
     pub score: u32,
     pub tetromino: Tetromino,
     pub over: bool,
+    rng: SmallRng,
 }
 
 impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
-    pub fn new() -> Self {
+    pub fn new_with_seed(seed: u64) -> Self {
+        let mut rng = SmallRng::seed_from_u64(seed);
         Game {
             grid: [[Color::None; WIDTH]; HEIGHT],
             score: 0,
             over: false,
-            tetromino: Tetromino::new_random(WIDTH),
+            tetromino: Tetromino::new_with_rng(WIDTH, &mut rng),
+            rng,
         }
+    }
+
+    pub fn new() -> Self {
+        Self::new_with_seed(rand::random())
     }
 
     pub fn draw_piece(&mut self, draw: bool) {
@@ -73,9 +81,9 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
         (left, right, down)
     }
 
-    pub fn turn(&mut self) {
+    pub fn rotate(&mut self) {
         let backup = self.tetromino.cells;
-        if self.tetromino.turn().is_some() {
+        if self.tetromino.rotate().is_some() {
             let in_bounds = self.tetromino.cells.iter().all(|cell| {
                 cell.0 < HEIGHT && cell.1 < WIDTH && self.grid[cell.0][cell.1].is_none()
             });
@@ -98,7 +106,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
         } else {
             self.draw_piece(true);
             self.clear_lines();
-            self.tetromino = Tetromino::new_random(WIDTH);
+            self.tetromino = Tetromino::new_with_rng(WIDTH, &mut self.rng);
             self.over = self
                 .tetromino
                 .cells

@@ -42,7 +42,7 @@ fn bot() -> Result<(), Box<dyn Error>> {
         ]),
         vec![
             Box::new(ai::genes::TotalHeight),
-            Box::new(ai::genes::MaxHeight),
+            // Box::new(ai::genes::MaxHeight),
             Box::new(ai::genes::LinesCleared),
             Box::new(ai::genes::Holes),
             Box::new(ai::genes::Bumpiness),
@@ -65,7 +65,7 @@ fn bot() -> Result<(), Box<dyn Error>> {
             std::thread::sleep(Duration::from_millis(100));
         }
         for _ in 0..rotations {
-            controller.game.turn();
+            controller.game.rotate();
             controller.render()?;
             std::thread::sleep(Duration::from_millis(100));
         }
@@ -80,15 +80,16 @@ fn bot() -> Result<(), Box<dyn Error>> {
 }
 
 fn evolve() {
-    let mut population = ai::Population::new_random(
-        10000,
+    let mut population = ai::Population::new(
+        1000,
         vec![
             Box::new(ai::genes::TotalHeight),
-            Box::new(ai::genes::MaxHeight),
+            // Box::new(ai::genes::MaxHeight),
             Box::new(ai::genes::LinesCleared),
             Box::new(ai::genes::Holes),
             Box::new(ai::genes::Bumpiness),
         ],
+        18,
     );
 
     population.evolve(100);
